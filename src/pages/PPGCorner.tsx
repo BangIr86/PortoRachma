@@ -40,7 +40,6 @@ export const PPGCorner: React.FC = () => {
     <div className="min-h-screen bg-rachma-bg text-rachma-text py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Header PPG Corner */}
         <div className="text-center md:text-left space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rachma-soft/50 text-rachma-primary text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" /> Ruang Belajar PPG
@@ -53,14 +52,12 @@ export const PPGCorner: React.FC = () => {
           </p>
         </div>
 
-        {/* State Loading */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <Loader2 className="w-8 h-8 text-rachma-primary animate-spin" />
             <p className="text-xs text-rachma-muted">Memuat data mata kuliah...</p>
           </div>
         ) : courses.length === 0 ? (
-          /* Jika Data Kosong */
           <div className="bg-white rounded-3xl p-12 text-center border border-rachma-soft/60 space-y-4 shadow-sm">
             <div className="w-16 h-16 bg-rachma-bg rounded-2xl flex items-center justify-center mx-auto text-rachma-muted">
               <FolderOpen className="w-8 h-8" />
@@ -76,7 +73,6 @@ export const PPGCorner: React.FC = () => {
             </Link>
           </div>
         ) : (
-          /* Daftar Grid Mata Kuliah */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
               <div key={course.id} className="bg-white rounded-3xl p-6 shadow-sm border border-rachma-soft/60 hover:border-rachma-primary/50 hover:shadow-md transition-all flex flex-col justify-between group">

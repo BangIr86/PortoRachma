@@ -7,7 +7,6 @@ export const Admin: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState(false);
 
-  // === TABS ===
   const [activeTab, setActiveTab] = useState<'matkul' | 'topik' | 'artefak' | 'profil'>('matkul');
   const [loading, setLoading] = useState<boolean>(false);
   
@@ -15,25 +14,22 @@ export const Admin: React.FC = () => {
   const [topics, setTopics] = useState<any[]>([]);
   const [artifacts, setArtifacts] = useState<any[]>([]);
 
-  // === STATE PROFIL ===
   const [profile, setProfile] = useState<any>(null);
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
   const [heroDesc, setHeroDesc] = useState('');
   const [aboutDesc, setAboutDesc] = useState('');
   const [philosophy, setPhilosophy] = useState('');
-  const [photoUrl, setPhotoUrl] = useState(''); // URL foto saat ini
-  const [photoFile, setPhotoFile] = useState<File | null>(null); // File yang baru dipilih
-  const [photoPreview, setPhotoPreview] = useState<string>(''); // Pratinjau foto
+  const [photoUrl, setPhotoUrl] = useState(''); 
+  const [photoFile, setPhotoFile] = useState<File | null>(null); 
+  const [photoPreview, setPhotoPreview] = useState<string>(''); 
 
-  // === STATE MATKUL ===
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [code, setCode] = useState(''); 
   const [title, setTitle] = useState('');
   const [semester, setSemester] = useState('Semester 1');
   const [description, setDescription] = useState('');
 
-  // === STATE TOPIK ===
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [topicTitle, setTopicTitle] = useState('');
@@ -42,7 +38,6 @@ export const Admin: React.FC = () => {
   const [conc, setConc] = useState('');
   const [chan, setChan] = useState('');
 
-  // === STATE ARTEFAK ===
   const [editingArtifactId, setEditingArtifactId] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [artifactTitle, setArtifactTitle] = useState('');
@@ -77,7 +72,6 @@ export const Admin: React.FC = () => {
     localStorage.removeItem('rachma_admin_auth');
   };
 
-  // === FETCH DATA ===
   const fetchProfile = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', 1).single();
     if (data) {
@@ -85,7 +79,7 @@ export const Admin: React.FC = () => {
       setFullName(data.full_name); setRole(data.role); setHeroDesc(data.hero_desc);
       setAboutDesc(data.about_desc); setPhilosophy(data.philosophy); 
       setPhotoUrl(data.photo_url);
-      setPhotoPreview(data.photo_url); // Set pratinjau awal dari database
+      setPhotoPreview(data.photo_url); 
     }
   };
 
@@ -102,12 +96,11 @@ export const Admin: React.FC = () => {
     if (data) setArtifacts(data);
   };
 
-  // === HANDLER PROFIL ===
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file)); // Memunculkan pratinjau langsung
+      setPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -115,14 +108,12 @@ export const Admin: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    let finalPhotoUrl = photoUrl; // Default: gunakan URL lama
+    let finalPhotoUrl = photoUrl;
 
-    // Jika ada file foto baru yang diupload
     if (photoFile) {
       const fileExt = photoFile.name.split('.').pop();
       const fileName = `profil-${Date.now()}.${fileExt}`;
       
-      // Upload ke Supabase Storage (Bucket: 'portofolio')
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('portofolio')
         .upload(fileName, photoFile);
@@ -133,7 +124,6 @@ export const Admin: React.FC = () => {
         return;
       }
 
-      // Ambil URL Publik dari foto yang baru diunggah
       const { data: publicUrlData } = supabase.storage
         .from('portofolio')
         .getPublicUrl(fileName);
@@ -141,7 +131,6 @@ export const Admin: React.FC = () => {
       finalPhotoUrl = publicUrlData.publicUrl;
     }
 
-    // Simpan data ke database
     await supabase.from('profiles').update({
       full_name: fullName, 
       role, 
@@ -152,13 +141,12 @@ export const Admin: React.FC = () => {
     }).eq('id', 1);
 
     setPhotoUrl(finalPhotoUrl);
-    setPhotoFile(null); // Reset state file
+    setPhotoFile(null);
     fetchProfile(); 
     setLoading(false); 
     alert("Profil berhasil diperbarui!");
   };
 
-  // === HANDLER MATKUL ===
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !code) return alert("Kode dan Judul wajib diisi!");
@@ -179,7 +167,6 @@ export const Admin: React.FC = () => {
   };
   const resetCourseForm = () => { setEditingCourseId(null); setCode(''); setTitle(''); setSemester('Semester 1'); setDescription(''); };
 
-  // === HANDLER TOPIK ===
   const handleSaveTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCourse || !topicTitle) return alert("Pilih Matkul dan isi Judul Topik!");
@@ -204,7 +191,6 @@ export const Admin: React.FC = () => {
   };
   const resetTopicForm = () => { setEditingTopicId(null); setSelectedCourse(''); setTopicTitle(''); setConn(''); setChall(''); setConc(''); setChan(''); };
 
-  // === HANDLER ARTEFAK ===
   const handleSaveArtifact = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTopic || !artifactTitle || !artifactUrl) return alert("Pilih Topik, isi Judul, dan URL File!");
@@ -224,7 +210,6 @@ export const Admin: React.FC = () => {
   };
   const resetArtifactForm = () => { setEditingArtifactId(null); setSelectedTopic(''); setArtifactTitle(''); setArtifactUrl(''); };
 
-  // Hapus Data
   const handleDelete = async (table: string, id: string, refreshFn: () => void) => {
     if (!window.confirm(`Yakin ingin menghapus data ini dari ${table}?`)) return;
     await supabase.from(table).delete().eq('id', id);
@@ -268,7 +253,6 @@ export const Admin: React.FC = () => {
           </button>
         </div>
 
-        {/* TABS */}
         <div className="flex flex-wrap items-center gap-3 border-b border-rachma-soft/60 pb-4">
           <button onClick={() => { setActiveTab('profil'); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'profil' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><User className="w-4 h-4" /> Profil Admin</button>
           <button onClick={() => { setActiveTab('matkul'); resetCourseForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'matkul' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><BookOpen className="w-4 h-4" /> Mata Kuliah</button>
@@ -276,15 +260,12 @@ export const Admin: React.FC = () => {
           <button onClick={() => { setActiveTab('artefak'); resetArtifactForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'artefak' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><Paperclip className="w-4 h-4" /> Artefak</button>
         </div>
 
-        {/* =============== TAB PROFIL (DENGAN UPLOAD FOTO) =============== */}
         {activeTab === 'profil' && (
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-rachma-soft/60 max-w-3xl mx-auto">
             <h2 className="text-xl font-bold text-rachma-text flex items-center gap-2 mb-6">
               <User className="w-6 h-6 text-rachma-primary" /> Pengaturan Profil Utama
             </h2>
             <form onSubmit={handleSaveProfile} className="space-y-6">
-              
-              {/* UPLOAD FOTO SECTION */}
               <div className="flex flex-col md:flex-row items-center gap-6 p-5 bg-rachma-bg/40 rounded-2xl border border-rachma-soft/50">
                 <div className="w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-100">
                   {photoPreview ? (
@@ -302,7 +283,6 @@ export const Admin: React.FC = () => {
                   </label>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-rachma-text mb-1">Nama Lengkap</label>
@@ -313,7 +293,6 @@ export const Admin: React.FC = () => {
                   <input type="text" value={role} onChange={(e) => setRole(e.target.value)} className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
                 </div>
               </div>
-              
               <div>
                 <label className="block text-xs font-bold text-rachma-text mb-1">Deskripsi Singkat (Beranda)</label>
                 <textarea value={heroDesc} onChange={(e) => setHeroDesc(e.target.value)} rows={2} className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary resize-none" />
@@ -326,7 +305,6 @@ export const Admin: React.FC = () => {
                 <label className="block text-xs font-bold text-rachma-text mb-1">Filosofi Mengajar</label>
                 <textarea value={philosophy} onChange={(e) => setPhilosophy(e.target.value)} rows={3} className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary resize-none" />
               </div>
-              
               <button type="submit" disabled={loading} className="w-full py-3.5 bg-rachma-primary hover:bg-rachma-secondary text-white text-sm font-bold rounded-xl shadow-md mt-2">
                 {loading ? 'Menyimpan & Mengunggah...' : 'Simpan Profil'}
               </button>
@@ -334,7 +312,6 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* =============== TAB MATKUL =============== */}
         {activeTab === 'matkul' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60 h-fit">
@@ -377,7 +354,6 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* =============== TAB TOPIK =============== */}
         {activeTab === 'topik' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60 h-fit">
@@ -421,7 +397,6 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* =============== TAB ARTEFAK =============== */}
         {activeTab === 'artefak' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60 h-fit">
