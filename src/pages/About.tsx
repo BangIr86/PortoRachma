@@ -1,8 +1,19 @@
-import React from 'react';
-import { GraduationCap, Heart, Sparkles, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { GraduationCap, Heart, Sparkles, User, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const About: React.FC = () => {
-  const profilePhoto = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop";
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data } = await supabase.from('profiles').select('*').eq('id', 1).single();
+      if (data) setProfile(data);
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
 
   const educationHistory = [
     {
@@ -19,6 +30,14 @@ export const About: React.FC = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-rachma-bg flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-rachma-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-rachma-bg text-rachma-text py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto space-y-10">
@@ -28,22 +47,25 @@ export const About: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5" /> Tentang Saya
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-rachma-text">
-            Mengenal Lebih Dekat <span className="text-rachma-primary">Fikriya Rachma</span>
+            Mengenal Lebih Dekat <span className="text-rachma-primary">{profile?.full_name?.split(' ')[0] || 'Fikriya'}</span>
           </h1>
           <p className="text-rachma-muted text-sm md:text-base max-w-xl mx-auto">
-            Calon pendidik yang berdedikasi menciptakan suasana belajar yang inklusif, interaktif, dan berorientasi pada peserta didik.
+            {profile?.hero_desc}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-rachma-soft/60 flex flex-col items-center text-center space-y-4">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-rachma-primary/20 shadow-md p-1 bg-white">
-              <img src={profilePhoto} alt="Fikriya Rachma" className="w-full h-full object-cover rounded-full" />
+              <img 
+                src={profile?.photo_url || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop"} 
+                alt={profile?.full_name} 
+                className="w-full h-full object-cover rounded-full" 
+              />
             </div>
             <div>
-              <h2 className="font-bold text-lg text-rachma-text">Fikriya Rachma</h2>
-              <p className="text-xs text-rachma-primary font-bold">PPG Prajabatan GEL 1 2024</p>
-              <p className="text-xs text-rachma-muted mt-1">Calon Guru Profesional</p>
+              <h2 className="font-bold text-lg text-rachma-text">{profile?.full_name}</h2>
+              <p className="text-xs text-rachma-primary font-bold mt-1">{profile?.role}</p>
             </div>
           </div>
           <div className="md:col-span-2 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-rachma-soft/60 space-y-4 flex flex-col justify-center">
@@ -51,7 +73,7 @@ export const About: React.FC = () => {
               <Heart className="w-5 h-5 text-rachma-primary" /> Filosofi Mengajar
             </h3>
             <p className="text-rachma-muted text-sm leading-relaxed italic">
-              "Pendidikan bukan sekadar mentransfer ilmu pengetahuan, melainkan menuntun kodrat anak agar mereka dapat mencapai keselamatan dan kebahagiaan setinggi-tingginya. Saya percaya bahwa setiap siswa unik dan memiliki potensi unggulnya masing-masing."
+              "{profile?.philosophy}"
             </p>
           </div>
         </div>
@@ -60,8 +82,8 @@ export const About: React.FC = () => {
           <h3 className="text-lg font-bold text-rachma-text flex items-center gap-2">
             <User className="w-5 h-5 text-rachma-primary" /> Biografi Ringkas
           </h3>
-          <p className="text-rachma-muted text-sm leading-relaxed">
-            Saya adalah lulusan S1 Pendidikan yang saat ini sedang menempuh Pendidikan Profesi Guru (PPG) Prajabatan Gelombang 1 Tahun 2024. Selama studi, saya aktif mengembangkan modul ajar inovatif, instrumen asesmen diagnostik, dan media pembelajaran digital interaktif untuk menciptakan ruang belajar yang menyenangkan bagi peserta didik.
+          <p className="text-rachma-muted text-sm leading-relaxed whitespace-pre-line">
+            {profile?.about_desc}
           </p>
         </div>
 
