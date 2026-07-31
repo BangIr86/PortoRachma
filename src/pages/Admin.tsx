@@ -14,7 +14,6 @@ export const Admin: React.FC = () => {
   const [topics, setTopics] = useState<any[]>([]);
   const [artifacts, setArtifacts] = useState<any[]>([]);
 
-  const [profile, setProfile] = useState<any>(null);
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
   const [heroDesc, setHeroDesc] = useState('');
@@ -75,7 +74,6 @@ export const Admin: React.FC = () => {
   const fetchProfile = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', 1).single();
     if (data) {
-      setProfile(data);
       setFullName(data.full_name); setRole(data.role); setHeroDesc(data.hero_desc);
       setAboutDesc(data.about_desc); setPhilosophy(data.philosophy); 
       setPhotoUrl(data.photo_url);
@@ -114,7 +112,7 @@ export const Admin: React.FC = () => {
       const fileExt = photoFile.name.split('.').pop();
       const fileName = `profil-${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('portofolio')
         .upload(fileName, photoFile);
 
