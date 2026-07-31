@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Heart, Sparkles, BookOpen, User } from 'lucide-react';
+import { GraduationCap, Heart, Sparkles, User } from 'lucide-react';
 
 export const About: React.FC = () => {
   // Ganti URL ini dengan link foto profil Fikriya Rachma asli
