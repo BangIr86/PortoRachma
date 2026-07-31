@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { BookOpen, Plus, Trash2, Loader2, Sparkles, Layers, Paperclip, Link as LinkIcon, Lock, KeyRound, LogOut, Pencil, User, UploadCloud } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Sparkles, Layers, Paperclip, Link as LinkIcon, Lock, KeyRound, LogOut, Pencil, User, UploadCloud } from 'lucide-react';
 
 export const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

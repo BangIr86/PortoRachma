@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, BookOpen, FileText, Download, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, FileText, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface Reflection4C {
   connection?: string;

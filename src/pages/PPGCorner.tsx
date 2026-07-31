@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { BookOpen, ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react';
+import { ChevronRight, Loader2, Sparkles, FolderOpen } from 'lucide-react';
 
 interface Course {
   id: string;
