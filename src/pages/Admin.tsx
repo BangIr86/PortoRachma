@@ -41,6 +41,7 @@ export const Admin: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [artifactTitle, setArtifactTitle] = useState('');
   const [artifactUrl, setArtifactUrl] = useState('');
+  const [artifactFile, setArtifactFile] = useState<File | null>(null); // State baru untuk file artefak
 
   useEffect(() => {
     const isLogged = localStorage.getItem('rachma_admin_auth');
@@ -102,47 +103,34 @@ export const Admin: React.FC = () => {
     }
   };
 
+  const handleArtifactFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setArtifactFile(e.target.files[0]);
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     let finalPhotoUrl = photoUrl;
 
     if (photoFile) {
       const fileExt = photoFile.name.split('.').pop();
       const fileName = `profil-${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('portofolio')
-        .upload(fileName, photoFile);
-
+      const { error: uploadError } = await supabase.storage.from('portofolio').upload(fileName, photoFile);
       if (uploadError) {
         alert("Gagal mengunggah foto: " + uploadError.message);
-        setLoading(false);
-        return;
+        setLoading(false); return;
       }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('portofolio')
-        .getPublicUrl(fileName);
-
+      const { data: publicUrlData } = supabase.storage.from('portofolio').getPublicUrl(fileName);
       finalPhotoUrl = publicUrlData.publicUrl;
     }
 
     await supabase.from('profiles').update({
-      full_name: fullName, 
-      role, 
-      hero_desc: heroDesc, 
-      about_desc: aboutDesc, 
-      philosophy, 
-      photo_url: finalPhotoUrl
+      full_name: fullName, role, hero_desc: heroDesc, about_desc: aboutDesc, philosophy, photo_url: finalPhotoUrl
     }).eq('id', 1);
 
-    setPhotoUrl(finalPhotoUrl);
-    setPhotoFile(null);
-    fetchProfile(); 
-    setLoading(false); 
-    alert("Profil berhasil diperbarui!");
+    setPhotoUrl(finalPhotoUrl); setPhotoFile(null); fetchProfile(); setLoading(false); alert("Profil diperbarui!");
   };
 
   const handleSaveCourse = async (e: React.FormEvent) => {
@@ -191,13 +179,39 @@ export const Admin: React.FC = () => {
 
   const handleSaveArtifact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTopic || !artifactTitle || !artifactUrl) return alert("Pilih Topik, isi Judul, dan URL File!");
+    if (!selectedTopic || !artifactTitle) return alert("Pilih Topik dan isi Judul!");
+    if (!artifactUrl && !artifactFile) return alert("Pilih file untuk diupload atau masukkan Link URL!");
+    
     setLoading(true);
+    let finalArtifactUrl = artifactUrl;
+
+    // Jika user mengunggah file baru
+    if (artifactFile) {
+      const fileExt = artifactFile.name.split('.').pop();
+      const fileName = `artefak-${Date.now()}.${fileExt}`; // Menghindari nama file bentrok
+      
+      const { error: uploadError } = await supabase.storage
+        .from('portofolio')
+        .upload(fileName, artifactFile);
+
+      if (uploadError) {
+        alert("Gagal mengunggah file: " + uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('portofolio')
+        .getPublicUrl(fileName);
+
+      finalArtifactUrl = publicUrlData.publicUrl; // Ganti URL dengan link hasil upload
+    }
+
     if (editingArtifactId) {
-      await supabase.from('artifacts').update({ topic_id: selectedTopic, title: artifactTitle, file_url: artifactUrl }).eq('id', editingArtifactId);
+      await supabase.from('artifacts').update({ topic_id: selectedTopic, title: artifactTitle, file_url: finalArtifactUrl }).eq('id', editingArtifactId);
       alert("Artefak diperbarui!");
     } else {
-      await supabase.from('artifacts').insert([{ topic_id: selectedTopic, title: artifactTitle, file_url: artifactUrl }]);
+      await supabase.from('artifacts').insert([{ topic_id: selectedTopic, title: artifactTitle, file_url: finalArtifactUrl }]);
       alert("Artefak ditambahkan!");
     }
     resetArtifactForm(); fetchArtifacts(); setLoading(false);
@@ -206,7 +220,7 @@ export const Admin: React.FC = () => {
     setEditingArtifactId(a.id); setSelectedTopic(a.topic_id); setArtifactTitle(a.title); setArtifactUrl(a.file_url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const resetArtifactForm = () => { setEditingArtifactId(null); setSelectedTopic(''); setArtifactTitle(''); setArtifactUrl(''); };
+  const resetArtifactForm = () => { setEditingArtifactId(null); setSelectedTopic(''); setArtifactTitle(''); setArtifactUrl(''); setArtifactFile(null); };
 
   const handleDelete = async (table: string, id: string, refreshFn: () => void) => {
     if (!window.confirm(`Yakin ingin menghapus data ini dari ${table}?`)) return;
@@ -395,6 +409,7 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* =============== TAB ARTEFAK DENGAN OPSI UPLOAD =============== */}
         {activeTab === 'artefak' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60 h-fit">
@@ -405,9 +420,32 @@ export const Admin: React.FC = () => {
                   {topics.map(t => <option key={t.id} value={t.id}>{t.courses?.title} - {t.title}</option>)}
                 </select>
                 <input type="text" value={artifactTitle} onChange={(e) => setArtifactTitle(e.target.value)} placeholder="Judul Dokumen" className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
-                <input type="url" value={artifactUrl} onChange={(e) => setArtifactUrl(e.target.value)} placeholder="URL Link (Cth: G-Drive)" className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
+                
+                {/* 2 OPSI FILE ARTEFAK */}
+                <div className="space-y-4 p-4 bg-rachma-bg/40 rounded-xl border border-rachma-soft/50">
+                  <div>
+                    <label className="block text-xs font-bold text-rachma-text mb-2">Opsi 1: Upload File (PDF, Word, dll)</label>
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-rachma-soft text-rachma-primary hover:bg-rachma-soft/30 rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-sm w-full">
+                      <UploadCloud className="w-4 h-4 shrink-0" />
+                      <span className="truncate max-w-[200px]">{artifactFile ? artifactFile.name : 'Pilih File dari Perangkat'}</span>
+                      <input type="file" onChange={handleArtifactFileChange} className="hidden" />
+                    </label>
+                  </div>
+                  
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-rachma-soft/50"></div>
+                    <span className="shrink-0 mx-2 text-[10px] text-rachma-muted font-bold tracking-wider uppercase">Atau</span>
+                    <div className="flex-grow border-t border-rachma-soft/50"></div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-rachma-text mb-1">Opsi 2: Link URL (Google Drive, YouTube)</label>
+                    <input type="url" value={artifactUrl} onChange={(e) => setArtifactUrl(e.target.value)} placeholder="https://..." className="w-full text-xs p-3 border border-rachma-soft rounded-lg bg-white outline-none focus:border-rachma-primary" />
+                  </div>
+                </div>
+
                 <div className="flex gap-2">
-                  <button type="submit" disabled={loading} className="flex-1 py-3 bg-rachma-primary hover:bg-rachma-secondary text-white text-sm font-bold rounded-xl shadow-md">{loading ? 'Menyimpan...' : (editingArtifactId ? 'Simpan Perubahan' : 'Simpan')}</button>
+                  <button type="submit" disabled={loading} className="flex-1 py-3 bg-rachma-primary hover:bg-rachma-secondary text-white text-sm font-bold rounded-xl shadow-md">{loading ? 'Menyimpan & Mengunggah...' : (editingArtifactId ? 'Simpan Perubahan' : 'Simpan')}</button>
                   {editingArtifactId && <button type="button" onClick={resetArtifactForm} className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl">Batal</button>}
                 </div>
               </form>
