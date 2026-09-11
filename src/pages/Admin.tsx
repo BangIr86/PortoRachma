@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { BookOpen, Plus, Trash2, Sparkles, Layers, Paperclip, Link as LinkIcon, Lock, KeyRound, LogOut, Pencil, User, UploadCloud } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Sparkles, Layers, Paperclip, Link as LinkIcon, Lock, KeyRound, LogOut, Pencil, User, UploadCloud, GraduationCap } from 'lucide-react';
 
 export const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'matkul' | 'topik' | 'artefak' | 'profil'>('matkul');
+  const [activeTab, setActiveTab] = useState<'matkul' | 'topik' | 'artefak' | 'profil' | 'pendidikan'>('matkul');
   const [loading, setLoading] = useState<boolean>(false);
   
   const [courses, setCourses] = useState<any[]>([]);
   const [topics, setTopics] = useState<any[]>([]);
   const [artifacts, setArtifacts] = useState<any[]>([]);
+  const [educations, setEducations] = useState<any[]>([]);
 
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('');
@@ -43,6 +44,14 @@ export const Admin: React.FC = () => {
   const [artifactUrl, setArtifactUrl] = useState('');
   const [artifactFile, setArtifactFile] = useState<File | null>(null); // State baru untuk file artefak
 
+  const [editingEduId, setEditingEduId] = useState<string | null>(null);
+  const [eduYear, setEduYear] = useState('');
+  const [eduTitle, setEduTitle] = useState('');
+  const [eduInstitution, setEduInstitution] = useState('');
+  const [eduDesc, setEduDesc] = useState('');
+  const [eduOrder, setEduOrder] = useState<number>(0);
+  const [supabaseEduError, setSupabaseEduError] = useState<boolean>(false);
+
   useEffect(() => {
     const isLogged = localStorage.getItem('rachma_admin_auth');
     if (isLogged === 'true') setIsAuthenticated(true);
@@ -54,6 +63,7 @@ export const Admin: React.FC = () => {
       fetchTopics();
       if (activeTab === 'artefak') fetchArtifacts();
       if (activeTab === 'profil') fetchProfile();
+      if (activeTab === 'pendidikan') fetchEducations();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -94,6 +104,80 @@ export const Admin: React.FC = () => {
     const { data } = await supabase.from('artifacts').select('*, topics(title, courses(title))').order('created_at', { ascending: false });
     if (data) setArtifacts(data);
   };
+
+  const fetchEducations = async () => {
+    const { data, error } = await supabase.from('educations').select('*').order('order_index', { ascending: true });
+    if (error && error.code === 'PGRST205') {
+      setSupabaseEduError(true);
+    } else {
+      setSupabaseEduError(false);
+    }
+    
+    if (data && data.length > 0) {
+      setEducations(data);
+      localStorage.setItem('rachma_educations_fallback', JSON.stringify(data));
+    } else {
+      const localEdu = localStorage.getItem('rachma_educations_fallback');
+      if (localEdu) {
+        try { setEducations(JSON.parse(localEdu)); } catch(e) {}
+      } else {
+        setEducations([]);
+      }
+    }
+  };
+
+  const handleSaveEducation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eduYear || !eduTitle || !eduInstitution) return alert("Tahun, Jenjang, dan Instansi wajib diisi!");
+    setLoading(true);
+    
+    const eduObj = { 
+      year: eduYear, 
+      title: eduTitle, 
+      institution: eduInstitution, 
+      description: eduDesc, 
+      order_index: eduOrder 
+    };
+
+    if (editingEduId) {
+      const { error } = await supabase.from('educations').update(eduObj).eq('id', editingEduId);
+      if (error && error.code === 'PGRST205') {
+        // Fallback to local storage
+        const current = [...educations];
+        const idx = current.findIndex(x => x.id === editingEduId);
+        if(idx !== -1) current[idx] = { ...current[idx], ...eduObj };
+        setEducations(current);
+        localStorage.setItem('rachma_educations_fallback', JSON.stringify(current));
+        alert("Disimpan ke penyimpanan lokal (Tabel Supabase belum ada).");
+      } else {
+        alert("Riwayat pendidikan diperbarui!");
+      }
+    } else {
+      const { error } = await supabase.from('educations').insert([eduObj]).select();
+      if (error && error.code === 'PGRST205') {
+        const current = [...educations];
+        current.push({ id: Date.now().toString(), ...eduObj });
+        setEducations(current);
+        localStorage.setItem('rachma_educations_fallback', JSON.stringify(current));
+        alert("Ditambahkan ke penyimpanan lokal (Tabel Supabase belum ada).");
+      } else {
+        alert("Riwayat pendidikan ditambahkan!");
+      }
+    }
+    resetEducationForm(); 
+    fetchEducations(); 
+    setLoading(false);
+  };
+
+  const editEducation = (edu: any) => {
+    setEditingEduId(edu.id); setEduYear(edu.year); setEduTitle(edu.title); 
+    setEduInstitution(edu.institution); setEduDesc(edu.description || ''); setEduOrder(edu.order_index || 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const resetEducationForm = () => { 
+    setEditingEduId(null); setEduYear(''); setEduTitle(''); setEduInstitution(''); setEduDesc(''); setEduOrder(educations.length + 1); 
+  };
+
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -267,6 +351,7 @@ export const Admin: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3 border-b border-rachma-soft/60 pb-4">
           <button onClick={() => { setActiveTab('profil'); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'profil' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><User className="w-4 h-4" /> Profil Admin</button>
+          <button onClick={() => { setActiveTab('pendidikan'); resetEducationForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'pendidikan' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><GraduationCap className="w-4 h-4" /> Riwayat Pendidikan</button>
           <button onClick={() => { setActiveTab('matkul'); resetCourseForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'matkul' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><BookOpen className="w-4 h-4" /> Mata Kuliah</button>
           <button onClick={() => { setActiveTab('topik'); resetTopicForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'topik' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><Layers className="w-4 h-4" /> Topik & Refleksi</button>
           <button onClick={() => { setActiveTab('artefak'); resetArtifactForm(); }} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === 'artefak' ? 'bg-rachma-primary text-white shadow-md' : 'bg-white text-rachma-text hover:bg-rachma-soft/50 border border-rachma-soft'}`}><Paperclip className="w-4 h-4" /> Artefak</button>
@@ -321,6 +406,75 @@ export const Admin: React.FC = () => {
                 {loading ? 'Menyimpan & Mengunggah...' : 'Simpan Profil'}
               </button>
             </form>
+          </div>
+        )}
+
+        {activeTab === 'pendidikan' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60 h-fit">
+              <h2 className="text-lg font-bold text-rachma-text flex items-center gap-2 mb-4">
+                <Plus className="w-5 h-5 text-rachma-primary" /> {editingEduId ? 'Edit Pendidikan' : 'Tambah Pendidikan'}
+              </h2>
+              <form onSubmit={handleSaveEducation} className="space-y-4">
+                <input type="text" value={eduYear} onChange={(e) => setEduYear(e.target.value)} placeholder="Tahun (Cth: 2024 - Sekarang)" className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
+                <input type="text" value={eduTitle} onChange={(e) => setEduTitle(e.target.value)} placeholder="Jenjang / Gelar" className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
+                <input type="text" value={eduInstitution} onChange={(e) => setEduInstitution(e.target.value)} placeholder="Nama Instansi / Kampus" className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary" />
+                <textarea value={eduDesc} onChange={(e) => setEduDesc(e.target.value)} placeholder="Deskripsi Singkat" rows={3} className="w-full text-sm p-3 border border-rachma-soft rounded-xl bg-rachma-bg/30 outline-none focus:border-rachma-primary resize-none" />
+                <div className="flex gap-2">
+                  <button type="submit" disabled={loading} className="flex-1 py-3 bg-rachma-primary hover:bg-rachma-secondary text-white text-sm font-bold rounded-xl shadow-md">{loading ? 'Menyimpan...' : (editingEduId ? 'Simpan' : 'Tambah')}</button>
+                  {editingEduId && <button type="button" onClick={resetEducationForm} className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl">Batal</button>}
+                </div>
+              </form>
+            </div>
+            <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-rachma-soft/60">
+              <h2 className="text-lg font-bold text-rachma-text flex items-center gap-2 mb-4"><GraduationCap className="w-5 h-5 text-rachma-primary" /> Daftar Riwayat Pendidikan</h2>
+              
+              {supabaseEduError && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                  <h3 className="text-sm font-bold text-yellow-800 mb-1">Tabel Supabase Belum Dibuat</h3>
+                  <p className="text-xs text-yellow-700 mb-2">Perubahan saat ini hanya disimpan sementara di peramban (lokal). Agar permanen dan sinkron untuk semua pengunjung, buat tabel `educations` di Supabase SQL Editor:</p>
+                  <pre className="text-[10px] bg-white p-2 rounded border border-yellow-200 text-yellow-900 overflow-x-auto">
+                    {`CREATE TABLE public.educations (
+  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  year TEXT NOT NULL,
+  title TEXT NOT NULL,
+  institution TEXT NOT NULL,
+  description TEXT,
+  order_index INT DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+ALTER TABLE public.educations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public Read" ON public.educations FOR SELECT USING (true);
+CREATE POLICY "Anon Insert" ON public.educations FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anon Update" ON public.educations FOR UPDATE USING (true);
+CREATE POLICY "Anon Delete" ON public.educations FOR DELETE USING (true);`}
+                  </pre>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {educations.map(edu => (
+                  <div key={edu.id} className="flex justify-between items-center p-4 bg-rachma-bg/40 border border-rachma-soft/50 rounded-2xl hover:border-rachma-primary/50 transition-colors">
+                    <div>
+                      <span className="text-[10px] bg-rachma-primary/10 text-rachma-primary font-bold px-2 py-0.5 rounded-full mr-2">{edu.year}</span>
+                      <h3 className="font-bold text-sm inline-block">{edu.title}</h3>
+                      <p className="text-xs text-rachma-muted mt-1">{edu.institution}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => editEducation(edu)} className="text-blue-500 p-2 hover:bg-blue-50 rounded-lg"><Pencil className="w-4 h-4"/></button>
+                      <button onClick={async () => {
+                        if(window.confirm('Hapus riwayat ini?')) {
+                           if(!supabaseEduError) await supabase.from('educations').delete().eq('id', edu.id);
+                           const cur = educations.filter(x => x.id !== edu.id);
+                           setEducations(cur); localStorage.setItem('rachma_educations_fallback', JSON.stringify(cur));
+                        }
+                      }} className="text-red-500 p-2 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4"/></button>
+                    </div>
+                  </div>
+                ))}
+                {educations.length === 0 && <p className="text-sm text-center text-rachma-muted py-8">Belum ada riwayat pendidikan.</p>}
+              </div>
+            </div>
           </div>
         )}
 

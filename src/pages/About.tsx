@@ -4,31 +4,54 @@ import { supabase } from '../lib/supabase';
 
 export const About: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
+  const [educations, setEducations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', 1).single();
-      if (data) setProfile(data);
+    const fetchData = async () => {
+      // Fetch Profile
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', 1).single();
+      if (profileData) setProfile(profileData);
+
+      // Fetch Educations
+      const { data: eduData } = await supabase.from('educations').select('*').order('order_index', { ascending: true });
+      
+      if (eduData && eduData.length > 0) {
+        setEducations(eduData);
+      } else {
+        // Fallback to localStorage or default
+        const localEdu = localStorage.getItem('rachma_educations_fallback');
+        let parsedEdu = null;
+        if (localEdu) {
+          try {
+            parsedEdu = JSON.parse(localEdu);
+          } catch(e) {}
+        }
+        
+        if (parsedEdu && parsedEdu.length > 0) {
+          setEducations(parsedEdu);
+        } else {
+          setEducations([
+            {
+              year: '2024 - Sekarang',
+              title: 'Pendidikan Profesi Guru (PPG) Prajabatan',
+              institution: 'Universitas Negeri Surabaya (UNESA)',
+              description: 'Mengikuti program sertifikasi pendidik profesional Gelombang 1 2024.'
+            },
+            {
+              year: '2019 - 2023',
+              title: 'S1 Pendidikan',
+              institution: 'Universitas Negeri Surabaya (UNESA)',
+              description: 'Lulus dengan predikat Sangat Memuaskan & aktif dalam kegiatan pengembangan media pembelajaran.'
+            }
+          ]);
+        }
+      }
+
       setLoading(false);
     };
-    fetchProfile();
+    fetchData();
   }, []);
-
-  const educationHistory = [
-    {
-      year: '2024 - Sekarang',
-      title: 'Pendidikan Profesi Guru (PPG) Prajabatan',
-      institution: 'Universitas Negeri Surabaya (UNESA)',
-      description: 'Mengikuti program sertifikasi pendidik profesional Gelombang 1 2024.'
-    },
-    {
-      year: '2019 - 2023',
-      title: 'S1 Pendidikan',
-      institution: 'Universitas Negeri Surabaya (UNESA)',
-      description: 'Lulus dengan predikat Sangat Memuaskan & aktif dalam kegiatan pengembangan media pembelajaran.'
-    }
-  ];
 
   if (loading) {
     return (
@@ -92,7 +115,7 @@ export const About: React.FC = () => {
             <GraduationCap className="w-6 h-6 text-rachma-primary" /> Riwayat Pendidikan
           </h3>
           <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-rachma-soft">
-            {educationHistory.map((item, index) => (
+            {educations.map((item, index) => (
               <div key={index} className="relative pl-10 space-y-1">
                 <div className="absolute left-0 top-1.5 w-7 h-7 rounded-full bg-rachma-primary text-white flex items-center justify-center text-xs font-bold shadow-sm">✓</div>
                 <span className="text-xs font-bold text-rachma-primary bg-rachma-soft/40 px-2.5 py-0.5 rounded-full inline-block">{item.year}</span>
