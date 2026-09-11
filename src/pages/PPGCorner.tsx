@@ -68,9 +68,24 @@ export const PPGCorner: React.FC = () => {
                 Mata kuliah akan muncul di sini setelah ditambahkan melalui Panel Admin.
               </p>
             </div>
-            <Link to="/admin" className="inline-block px-5 py-2.5 bg-rachma-primary hover:bg-rachma-secondary text-white text-xs font-bold rounded-full transition-colors shadow-sm">
+            <button 
+              onClick={() => {
+                const { hostname, protocol, port } = window.location;
+                const portStr = port ? `:${port}` : '';
+                let adminUrl = '';
+                if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                  adminUrl = `${protocol}//admin.localhost${portStr}`;
+                } else if (hostname.includes('vercel.app')) {
+                  adminUrl = `${protocol}//admin-${hostname}${portStr}`;
+                } else {
+                  adminUrl = `${protocol}//admin.${hostname}${portStr}`;
+                }
+                window.location.href = adminUrl;
+              }}
+              className="inline-block px-5 py-2.5 bg-rachma-primary hover:bg-rachma-secondary text-white text-xs font-bold rounded-full transition-colors shadow-sm cursor-pointer"
+            >
               Ke Panel Admin →
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
