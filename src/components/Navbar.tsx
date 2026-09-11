@@ -19,7 +19,7 @@ export const Navbar: React.FC = () => {
               Fikriya Rachma
             </h1>
             <p className="text-xs text-rachma-muted font-medium">
-              PPG Prajabatan GEL 1 2024
+              PPG Calon Guru 2026
             </p>
           </div>
         </Link>
