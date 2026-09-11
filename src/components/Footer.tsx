@@ -15,14 +15,16 @@ export const Footer: React.FC = () => {
             onClick={() => {
               const { hostname, protocol, port } = window.location;
               const portStr = port ? `:${port}` : '';
-              let adminUrl = '';
+              // Buang 'www.' jika ada
+              const cleanHostname = hostname.replace(/^www\./, '');
               
-              if (hostname === 'localhost' || hostname === '127.0.0.1') {
+              let adminUrl = '';
+              if (cleanHostname === 'localhost' || cleanHostname === '127.0.0.1') {
                 adminUrl = `${protocol}//admin.localhost${portStr}`;
-              } else if (hostname.includes('vercel.app')) {
-                adminUrl = `${protocol}//admin-${hostname}${portStr}`;
+              } else if (cleanHostname.includes('vercel.app')) {
+                adminUrl = `${protocol}//admin-${cleanHostname}${portStr}`;
               } else {
-                adminUrl = `${protocol}//admin.${hostname}${portStr}`;
+                adminUrl = `${protocol}//admin.${cleanHostname}${portStr}`;
               }
               window.location.href = adminUrl;
             }}
