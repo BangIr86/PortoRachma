@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
         <div>
           <h3 className="font-bold text-rachma-text text-sm">Fikriya Rachma</h3>
-          <p className="text-xs text-rachma-muted">Portofolio Digital PPG Prajabatan 2024</p>
+          <p className="text-xs text-rachma-muted">Portofolio Digital PPG Calon Guru 2026</p>
         </div>
         <div className="flex items-center gap-4 text-xs text-rachma-muted">
           <span>&copy; {new Date().getFullYear()} Fikriya Rachma. All rights reserved.</span>
