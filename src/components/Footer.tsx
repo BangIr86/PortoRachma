@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+
 
 export const Footer: React.FC = () => {
   return (
@@ -11,9 +11,25 @@ export const Footer: React.FC = () => {
         </div>
         <div className="flex items-center gap-4 text-xs text-rachma-muted">
           <span>&copy; {new Date().getFullYear()} Fikriya Rachma. All rights reserved.</span>
-          <Link to="/admin" className="hover:text-rachma-primary transition-colors">
+          <button 
+            onClick={() => {
+              const { hostname, protocol, port } = window.location;
+              const portStr = port ? `:${port}` : '';
+              let adminUrl = '';
+              
+              if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                adminUrl = `${protocol}//admin.localhost${portStr}`;
+              } else if (hostname.includes('vercel.app')) {
+                adminUrl = `${protocol}//admin-${hostname}${portStr}`;
+              } else {
+                adminUrl = `${protocol}//admin.${hostname}${portStr}`;
+              }
+              window.location.href = adminUrl;
+            }}
+            className="hover:text-rachma-primary transition-colors cursor-pointer"
+          >
             🔒 Admin
-          </Link>
+          </button>
         </div>
       </div>
     </footer>
